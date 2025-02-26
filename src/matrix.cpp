@@ -1,20 +1,27 @@
 #include "matrix.h"
-
+#include <iostream>
 Matrix::Matrix(int rows, int columns, double initial) {
     this->rows = rows;
     this->columns = columns;
     this->data = std::vector<std::vector<double>>(rows, std::vector<double>(columns, initial));
 }
 
-Matrix::Matrix(std::vector<std::vector<double>> list) {
+Matrix::Matrix(const std::vector<std::vector<double>>& list) {
     this->rows = list.size();
     this->columns = list[0].size();
-    this->data = list;
+    this->data.resize(this->rows, std::vector<double>(this->columns));
+    
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++) {
+            this->data[i][j] = list[i][j];
+        }
+    }
 }
 
 Matrix::Matrix(const Matrix& other) {
     this->rows = other.rows;
     this->columns = other.columns;
+    this->data.resize(this->rows, std::vector<double>(this->columns));
     
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < columns; j++) {
@@ -27,6 +34,8 @@ Matrix& Matrix::operator=(const Matrix& other) {
     this->rows = other.rows;
     this->columns = other.columns;
     
+    this->data.resize(this->rows, std::vector<double>(this->columns));
+
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < columns; j++) {
             this->data[i][j] = other.data[i][j];
@@ -40,16 +49,12 @@ Matrix::Matrix(Matrix&& other) noexcept {
     this->rows = other.rows;
     this->columns = other.columns;
     this->data = std::move(other.data);
-    other.rows = 0;
-    other.columns = 0;
 }
 
 Matrix& Matrix::operator=(Matrix&& other) noexcept {
     this->rows = other.rows;
     this->columns = other.columns;
     this->data = std::move(other.data);
-    other.rows = 0;
-    other.columns = 0;
     return *this;
 }
 
@@ -144,38 +149,33 @@ std::pair<Matrix, Matrix> Matrix::LUDecomposition() const {
         throw std::invalid_argument("Matrix must be square");
     }
     int n = rows;
-    Matrix L(1, 1);
-    Matrix U(1, 1);
+    Matrix L(n, n);
+    Matrix U(n, n);
 
-    // for (int i = 0; i < n; i++) {
-    //     // Upper triangular matrix U
-    //     for (int k = i; k < n; k++) {
-    //         double sum = 0.0;
-    //         for (int j = 0; j < i; j++) {
-    //             sum += L(i, j) * U(j, k);
-    //         }
-    //         U(i, k) = data[i][k] - sum;
-    //     }
+    for (int i = 0; i < n; i++) {
+        // Upper triangular matrix U
+        for (int k = i; k < n; k++) {
+            double sum = 0.0;
+            for (int j = 0; j < i; j++) {
+                sum += L(i, j) * U(j, k);
+            }
+            U(i, k) = data[i][k] - sum;
+        }
 
-    //     // Lower triangular matrix L
-    //     for (int k = i; k < n; k++) {
-    //         if (i == k) {
-    //             L(i, i) = 1.0;
-    //         } else {
-    //             double sum = 0.0;
-    //             for (int j = 0; j < i; j++) {
-    //                 sum += L(k, j) * U(j, i);
-    //             }
-    //             L(k, i) = (data[k][i] - sum) / U(i, i);
-    //         }
-    //     }
-    // }
-    //return {Matrix(1,1), Matrix(1,1)};
-
-    auto M = Matrix(2, 2);
-    auto P = Matrix(2, 2);
-
-    return std::pair<Matrix, Matrix>(M, P); 
+        // Lower triangular matrix L
+        for (int k = i; k < n; k++) {
+            if (i == k) {
+                L(i, i) = 1.0;
+            } else {
+                double sum = 0.0;
+                for (int j = 0; j < i; j++) {
+                    sum += L(k, j) * U(j, i);
+                }
+                L(k, i) = (data[k][i] - sum) / U(i, i);
+            }
+        }
+    }
+    return {L, U}; 
 }
 
 std::vector<double> Matrix::solveSLAE(const std::vector<double>& b) const {
@@ -186,30 +186,29 @@ std::vector<double> Matrix::solveSLAE(const std::vector<double>& b) const {
         throw std::invalid_argument("Vector b must have the same length as the number of rows in the matrix");
     }
 
-    std::pair<Matrix, Matrix> LU = LUDecomposition();
-    // int n = rows;
-    // std::vector<double> y(n), x(n);
+    auto [L, U] = LUDecomposition();
+    int n = rows;
+    std::vector<double> y(n), x(n);
 
-    // // Direct substitution (Ly = b)
-    // for (int i = 0; i < n; i++) {
-    //     y[i] = b[i];
-    //     for (int j = 0; j < i; j++) {
-    //         y[i] -= L(i, j) * y[j];
-    //     }
-    //     y[i] /= L(i, i);
-    // }
+    // Direct substitution (Ly = b)
+    for (int i = 0; i < n; i++) {
+        y[i] = b[i];
+        for (int j = 0; j < i; j++) {
+            y[i] -= L(i, j) * y[j];
+        }
+        y[i] /= L(i, i);
+    }
 
-    // // Direct substitution (Ly = b)
-    // for (int i = n - 1; i >= 0; i--) {
-    //     x[i] = y[i];
-    //     for (int j = i + 1; j < n; j++) {
-    //         x[i] -= U(i, j) * x[j];
-    //     }
-    //     x[i] /= U(i, i);
-    // }
+    // Direct substitution (Ly = b)
+    for (int i = n - 1; i >= 0; i--) {
+        x[i] = y[i];
+        for (int j = i + 1; j < n; j++) {
+            x[i] -= U(i, j) * x[j];
+        }
+        x[i] /= U(i, i);
+    }
 
-    // return x;
-    return {1, 2, 3, 4};
+    return x;
 }
 
 double Matrix::determinant() const {

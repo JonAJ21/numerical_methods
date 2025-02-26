@@ -10,7 +10,7 @@ private:
 
 public:
     Matrix(int rows, int columns, double initial = 0.0);
-    Matrix(std::vector<std::vector<double>> list);
+    Matrix(const std::vector<std::vector<double>>& list);
     Matrix(const Matrix& other);
     Matrix& operator=(const Matrix& other);
     Matrix(Matrix&& other) noexcept;

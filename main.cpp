@@ -8,14 +8,14 @@
 
 int main() {
     Matrix A = Matrix({
-        {-7, 3, -4, 7},
-        {8, -1, -7, 6},
-        {9, 9, 3, -6},
-        {-7, -9, -8, -5}
+        {-7, -9, 1, -9},
+        {-6, -8, -5, 2},
+        {-3, 6, 5, -9},
+        {-2, 0, -5, -9}
     });
     std::cout << "Matrix A:\n" << A << std::endl;
     
-    std::vector<double> b = {-126, 29, 27, 34};
+    std::vector<double> b = {29, 42, 11, 75};
     std::cout << "Vector b^T:\n";
     for (int i = 0; i < b.size(); i++) {
         std::cout << std::setw(10) << b[i] << " ";
@@ -29,8 +29,13 @@ int main() {
     }
     std::cout << std::endl;
 
-    // Matrix A = Matrix(2,2);
-    // std::cout << "Matrix A:\n" << A << std::endl;
+    std::cout << "Matrix A^-1:\n" << A.inverse() << std::endl;
+
+
+    std::cout << "Matrix A * A^-1:\n" << A * A.inverse() << std::endl;
+
+
+    std::cout << "Determinant of A: " << A.determinant() << std::endl;
 
 
 
