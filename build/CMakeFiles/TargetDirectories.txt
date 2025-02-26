@@ -1,0 +1,3 @@
+/home/jonaj/StudyDir/numerical_methods/build/CMakeFiles/main.dir
+/home/jonaj/StudyDir/numerical_methods/build/CMakeFiles/edit_cache.dir
+/home/jonaj/StudyDir/numerical_methods/build/CMakeFiles/rebuild_cache.dir
