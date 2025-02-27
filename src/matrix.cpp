@@ -144,6 +144,17 @@ Matrix Matrix::transpose() const {
     return result;
 }
 
+bool Matrix::isTridiagonal() const {
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++) {
+            if (abs(i - j) > 1 && data[i][j] != 0) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 std::pair<Matrix, Matrix> Matrix::LUDecomposition() const {
     if (rows != columns) {
         throw std::invalid_argument("Matrix must be square");
@@ -178,7 +189,7 @@ std::pair<Matrix, Matrix> Matrix::LUDecomposition() const {
     return {L, U}; 
 }
 
-std::vector<double> Matrix::solveSLAE(const std::vector<double>& b) const {
+std::vector<double> Matrix::solveSLAEWithLUDecompositionMethod(const std::vector<double>& b) const {
     if (rows != columns) {
         throw std::invalid_argument("Matrix must be square");
     }
@@ -211,6 +222,37 @@ std::vector<double> Matrix::solveSLAE(const std::vector<double>& b) const {
     return x;
 }
 
+std::vector<double> Matrix::solveSLAEWithTridiagonalMethod(const std::vector<double>& d) const {
+    if (rows == 0 || columns != rows) {
+        throw std::invalid_argument("Matrix must be square");
+    }
+
+    if (!isTridiagonal()) {
+        throw std::invalid_argument("Matrix must be tridiagonal");
+    }
+
+    
+    std::vector<double> p(rows), q(rows);
+    p[0] = - data[0][1] / data[0][0];
+    q[0] = d[0] / data[0][0];
+
+    for (int i = 1; i < rows - 1; i++) {
+        p[i] = - data[i][i + 1] / (data[i][i] + data[i][i - 1] * p[i - 1]);
+        q[i] = (d[i] - data[i][i - 1] * q[i - 1]) / (data[i][i] + data[i][i - 1] * p[i - 1]);
+    }
+
+    p[rows - 1] = 0.0;
+    q[rows - 1] = (d[rows - 1] - data[rows - 1][rows - 2] * q[rows - 2]) / (data[rows - 1][rows - 1] + data[rows - 1][rows - 2] * p[rows - 2]);
+
+    std::vector<double> x(rows);
+    x[rows - 1] = q[rows - 1];
+    for (int i = rows - 2; i >= 0; i--) {
+        x[i] = q[i] + p[i] * x[i + 1];
+    }
+
+    return x;
+}
+
 double Matrix::determinant() const {
     if (rows != columns) {
         throw std::invalid_argument("Matrix must be square");
@@ -237,7 +279,7 @@ Matrix Matrix::inverse() const {
         std::vector<double> b(n, 0.0);
         b[i] = 1.0; // i-й столбец единичной матрицы
 
-        auto x = solveSLAE(b);
+        auto x = solveSLAEWithLUDecompositionMethod(b);
 
         // Writing the solution in the inverse matrix
         for (int j = 0; j < n; j++) {

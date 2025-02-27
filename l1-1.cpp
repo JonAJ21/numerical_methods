@@ -22,7 +22,7 @@ int main() {
     }
     std::cout << std::endl;
 
-    std::vector<double> x = A.solveSLAE(b);
+    std::vector<double> x = A.solveSLAEWithLUDecompositionMethod(b);
     std::cout << "Vector x^T:\n";
     for (int i = 0; i < x.size(); i++) {
         std::cout << std::setw(10) << x[i] << " ";
@@ -36,8 +36,5 @@ int main() {
 
 
     std::cout << "Determinant of A: " << A.determinant() << std::endl;
-
-
-
     return 0;
 }

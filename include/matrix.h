@@ -30,7 +30,11 @@ public:
 
     Matrix transpose() const;
     std::pair<Matrix, Matrix> LUDecomposition() const;
-    std::vector<double> solveSLAE(const std::vector<double>& b) const;
+
+    bool isTridiagonal() const;
+
+    std::vector<double> solveSLAEWithLUDecompositionMethod(const std::vector<double>& b) const;
+    std::vector<double> solveSLAEWithTridiagonalMethod(const std::vector<double>& d) const;
 
     Matrix inverse() const;
     double determinant() const;
