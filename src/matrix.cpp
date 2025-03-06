@@ -162,18 +162,42 @@ std::pair<Matrix, Matrix> Matrix::LUDecomposition() const {
     int n = rows;
     Matrix L(n, n);
     Matrix U(n, n);
+    Matrix A = *this; // Рабочая копия матрицы A
+
+    std::vector<int> rowPermutations(n); // Перестановки строк
+    for (int i = 0; i < n; ++i) {
+        rowPermutations[i] = i;
+    }
 
     for (int i = 0; i < n; i++) {
-        // Upper triangular matrix U
+        // Выбор ведущего элемента в столбце i
+        int maxRow = i;
+        double maxVal = std::abs(A(i, i));
+        for (int k = i + 1; k < n; k++) {
+            if (std::abs(A(k, i)) > maxVal) {
+                maxVal = std::abs(A(k, i));
+                maxRow = k;
+            }
+        }
+
+        // Перестановка строк
+        if (maxRow != i) {
+            std::swap(rowPermutations[i], rowPermutations[maxRow]);
+            for (int j = 0; j < n; j++) {
+                std::swap(A(i, j), A(maxRow, j));
+            }
+        }
+
+        // Верхняя треугольная матрица U
         for (int k = i; k < n; k++) {
             double sum = 0.0;
             for (int j = 0; j < i; j++) {
                 sum += L(i, j) * U(j, k);
             }
-            U(i, k) = data[i][k] - sum;
+            U(i, k) = A(i, k) - sum;
         }
 
-        // Lower triangular matrix L
+        // Нижняя треугольная матрица L
         for (int k = i; k < n; k++) {
             if (i == k) {
                 L(i, i) = 1.0;
@@ -182,11 +206,12 @@ std::pair<Matrix, Matrix> Matrix::LUDecomposition() const {
                 for (int j = 0; j < i; j++) {
                     sum += L(k, j) * U(j, i);
                 }
-                L(k, i) = (data[k][i] - sum) / U(i, i);
+                L(k, i) = (A(k, i) - sum) / U(i, i);
             }
         }
     }
-    return {L, U}; 
+
+    return {L, U};
 }
 
 std::vector<double> Matrix::solveSLAEWithLUDecompositionMethod(const std::vector<double>& b) const {

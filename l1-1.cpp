@@ -29,6 +29,16 @@ int main() {
     }
     std::cout << std::endl;
 
+    std::cout << "Test:" << std::endl;
+
+    for (int i = 0; i < A.getRows(); i++) {
+        double res = 0;
+        for (int j = 0; j < A.getColumns(); j++) {
+            res += A(i, j) * x[j];
+        }
+        std::cout << "( " << res << " == " << b[i] << " ) = " << (((abs(res - b[i]) < 1e-9) == 1) ? "True" : "False") << std::endl;  
+    }
+
     std::cout << "Matrix A^-1:\n" << A.inverse() << std::endl;
 
 
