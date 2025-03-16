@@ -21,8 +21,9 @@ int main() {
         std::cout << std::setw(10) << b[i] << " ";
     }
     std::cout << std::endl;
-
-    std::vector<double> x = A.solveSLAEWithLUDecompositionMethod(b);
+    auto [L, U] = A.LUDecomposition();
+    std::vector<double> x = Matrix::solveSLAEWithLUDecompositionMethod(L, U, b);
+    
     std::cout << "Vector x^T:\n";
     for (int i = 0; i < x.size(); i++) {
         std::cout << std::setw(10) << x[i] << " ";

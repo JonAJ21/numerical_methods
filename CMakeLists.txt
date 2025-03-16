@@ -14,3 +14,7 @@ add_executable(l1-1
 add_executable (l1-2
     l1-2.cpp
     src/matrix.cpp)
+
+add_executable(l1-3
+    l1-3.cpp
+    src/matrix.cpp)

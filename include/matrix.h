@@ -33,11 +33,21 @@ public:
 
     bool isTridiagonal() const;
 
-    std::vector<double> solveSLAEWithLUDecompositionMethod(const std::vector<double>& b) const;
+    static std::vector<double> solveSLAEWithLUDecompositionMethod(const Matrix& L, const Matrix& U, const std::vector<double>& b);
     std::vector<double> solveSLAEWithTridiagonalMethod(const std::vector<double>& d) const;
 
     Matrix inverse() const;
     double determinant() const;
+
+    static double chebyshev_norm(const std::vector<double>& vec);
+    double mat_norm() const;
+    double line_rate_norm() const;
+
+    static std::vector<double> subtractVectors(const std::vector<double>& vec1, const std::vector<double>& vec2);
+
+    std::pair<std::vector<double>, int> iterations(const std::vector<double>& b, double e) const;
+    std::pair<std::vector<double>, int> zeydel(const std::vector<double>& b, double e) const;
+
 
     friend std::ostream& operator<<(std::ostream& os, const Matrix& matrix);
 };
