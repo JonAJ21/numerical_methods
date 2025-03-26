@@ -162,15 +162,14 @@ std::pair<Matrix, Matrix> Matrix::LUDecomposition() const {
     int n = rows;
     Matrix L(n, n);
     Matrix U(n, n);
-    Matrix A = *this; // Рабочая копия матрицы A
+    Matrix A = *this; 
 
-    std::vector<int> rowPermutations(n); // Перестановки строк
+    std::vector<int> rowPermutations(n); 
     for (int i = 0; i < n; ++i) {
         rowPermutations[i] = i;
     }
 
     for (int i = 0; i < n; i++) {
-        // Выбор ведущего элемента в столбце i
         int maxRow = i;
         double maxVal = std::abs(A(i, i));
         for (int k = i + 1; k < n; k++) {
@@ -180,7 +179,6 @@ std::pair<Matrix, Matrix> Matrix::LUDecomposition() const {
             }
         }
 
-        // Перестановка строк
         if (maxRow != i) {
             std::swap(rowPermutations[i], rowPermutations[maxRow]);
             for (int j = 0; j < n; j++) {
@@ -188,7 +186,6 @@ std::pair<Matrix, Matrix> Matrix::LUDecomposition() const {
             }
         }
 
-        // Верхняя треугольная матрица U
         for (int k = i; k < n; k++) {
             double sum = 0.0;
             for (int j = 0; j < i; j++) {
@@ -197,7 +194,6 @@ std::pair<Matrix, Matrix> Matrix::LUDecomposition() const {
             U(i, k) = A(i, k) - sum;
         }
 
-        // Нижняя треугольная матрица L
         for (int k = i; k < n; k++) {
             if (i == k) {
                 L(i, i) = 1.0;
@@ -214,7 +210,10 @@ std::pair<Matrix, Matrix> Matrix::LUDecomposition() const {
     return {L, U};
 }
 
-std::vector<double> Matrix::solveSLAEWithLUDecompositionMethod(const std::vector<double>& b) const {
+std::vector<double> Matrix::solveSLAEWithLUDecompositionMethod(const Matrix& L, const Matrix& U, const std::vector<double>& b) {
+    int rows = L.getRows();
+    int columns = L.getColumns();
+    
     if (rows != columns) {
         throw std::invalid_argument("Matrix must be square");
     }
@@ -222,11 +221,9 @@ std::vector<double> Matrix::solveSLAEWithLUDecompositionMethod(const std::vector
         throw std::invalid_argument("Vector b must have the same length as the number of rows in the matrix");
     }
 
-    auto [L, U] = LUDecomposition();
     int n = rows;
     std::vector<double> y(n), x(n);
 
-    // Direct substitution (Ly = b)
     for (int i = 0; i < n; i++) {
         y[i] = b[i];
         for (int j = 0; j < i; j++) {
@@ -235,7 +232,6 @@ std::vector<double> Matrix::solveSLAEWithLUDecompositionMethod(const std::vector
         y[i] /= L(i, i);
     }
 
-    // Direct substitution (Ly = b)
     for (int i = n - 1; i >= 0; i--) {
         x[i] = y[i];
         for (int j = i + 1; j < n; j++) {
@@ -298,15 +294,13 @@ Matrix Matrix::inverse() const {
     }
     int n = rows;
     Matrix inv(n, n);
-
-    // Solve the system for each column of the identity matrix
+    auto [L, U] = LUDecomposition();
     for (int i = 0; i < n; i++) {
         std::vector<double> b(n, 0.0);
-        b[i] = 1.0; // i-й столбец единичной матрицы
+        b[i] = 1.0; 
+    
+        auto x = solveSLAEWithLUDecompositionMethod(L, U, b);
 
-        auto x = solveSLAEWithLUDecompositionMethod(b);
-
-        // Writing the solution in the inverse matrix
         for (int j = 0; j < n; j++) {
             inv(j, i) = x[j];
         }
@@ -314,6 +308,134 @@ Matrix Matrix::inverse() const {
 
     return inv;
 } 
+
+double Matrix::chebyshev_norm(const std::vector<double>& vec) {
+    double norm = 0;
+    for (double val : vec) {
+        norm = std::max(norm, std::abs(val));
+    }
+    return norm;
+}
+
+double Matrix::mat_norm() const {
+    double norm = -1e9; // -INFINITY
+    for (const auto& row : data) {
+        double row_sum = 0;
+        for (double val : row) {
+            row_sum += std::abs(val);
+        }
+        norm = std::max(norm, row_sum);
+    }
+    return norm;
+}
+
+double Matrix::line_rate_norm() const {
+    double norm = 0;
+    for (const auto& row : data) {
+        double lineSum = 0;
+        for (double val : row) {
+            lineSum += std::abs(val);
+        }
+        norm = std::max(norm, lineSum);
+    }
+    return norm;
+}
+
+std::vector<double> Matrix::subtractVectors(const std::vector<double>& vec1, const std::vector<double>& vec2) {
+    if (vec1.size() != vec2.size()) {
+        throw std::invalid_argument("Vectors must have the same size for subtraction.");
+    }
+
+    std::vector<double> result(vec1.size());
+    for (size_t i = 0; i < vec1.size(); ++i) {
+        result[i] = vec1[i] - vec2[i];
+    }
+
+    return result;
+}
+
+std::pair<std::vector<double>, int> Matrix::iterations(const std::vector<double>& b, double e) const {
+    int n = rows;
+    std::vector<std::vector<double>> A1(n, std::vector<double>(n, 0));
+    std::vector<double> b1(n);
+    std::vector<double> x(n);
+
+    for (int i = 0; i < n; ++i) {
+        b1[i] = b[i] / data[i][i];
+        for (int j = 0; j < n; ++j) {
+            if (i != j) {
+                A1[i][j] = -data[i][j] / data[i][i];
+            }
+        }
+    }
+
+    double e1 = 1;
+    x = b1;
+    int num = 0;
+
+    while (e1 > e) {
+        std::vector<double> x1(n);
+
+        for (int i = 0; i < n; ++i) {
+            x1[i] = b1[i];
+            for (int j = 0; j < n; ++j) {
+                x1[i] += A1[i][j] * x[j];
+            }
+        }
+        
+        e1 = mat_norm() / (1 - Matrix(A1).mat_norm()) * chebyshev_norm(subtractVectors(x, x1));
+
+        x = x1;
+        num++;
+    }
+
+
+    return {x, num};
+}
+
+
+std::pair<std::vector<double>, int> Matrix::zeydel(const std::vector<double>& b, double e) const {
+    int n = rows;
+    std::vector<std::vector<double>> A1(n, std::vector<double>(n, 0));
+    std::vector<double> b1(n, 0);
+    std::vector<double> x0(n, 0);
+    std::vector<double> x(n, 0);
+    double eps_k = 1;
+
+    for (int i = 0; i < n; ++i) {
+        b1[i] = b[i] / data[i][i];
+        for (int j = 0; j < n; ++j) {
+            if (i != j) {
+                A1[i][j] = -data[i][j] / data[i][i];
+            }
+        }
+    }
+
+    int num = 0;
+
+    while (true) {
+        num++;
+        x0 = x;
+
+        for (int i = 0; i < n; ++i) {
+            x[i] = b1[i];
+            for (int j = 0; j < n; ++j) {
+                x[i] += A1[i][j] * x[j];
+            }
+        }
+
+        eps_k = mat_norm() / (1 - Matrix(A1).mat_norm()) * chebyshev_norm(subtractVectors(x, x0));
+
+        if (eps_k < e) {
+            break;
+        }
+    }
+
+    return {x, num};
+}
+
+
+
 
 std::ostream& operator<<(std::ostream& os, const Matrix& mat) {
     for (int i = 0; i < mat.rows; i++) {
