@@ -88,12 +88,26 @@ def main():
     a = 1
     
     x0_simple = np.array([-0.5, -0.5])
-    i, x = simple_iterations(x0_simple, a, tao=0.1)
+    i, x = simple_iterations(x0_simple, a, eps=1e-9, tao=0.1)
+    print("Simple iterations:")
     print(f"Solution: {x}, Iterations: {i}")
     
+    print("Tests:")
+    print(f"Simple iterations: {F(x, a)} == [0, 0]")
+    print()
     x0_newton = np.array([-0.5, -0.5])
-    i, x = newton_method(x0_newton, a)
+    i, x = newton_method(x0_newton, a, eps=1e-9)
+    print("Newton method:")
     print(f"Solution: {x}, Iterations: {i}")
+    print("Tests:")
+    print(f"Newton x0=[-0.5, -0.5]: {F(x, a)} == [0, 0]")
+    
+    x0_newton = np.array([0.5, 0.5])
+    i, x = newton_method(x0_newton, a, eps=1e-9)
+    print(f"Solution: {x}, Iterations: {i}")
+    print("Tests:")
+    print(f"Newton x0=[0.5, 0.5]: {F(x, a)} == [0, 0]")
+    
 
 
 if __name__ == "__main__":
