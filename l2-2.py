@@ -32,7 +32,8 @@ def F(x: np.array, a: int) -> np.array:
         x[0]**2 + x[1]**2 - a**2, 
         x[0] - np.exp(x[1]) + a  
     ])
-    
+
+
 def Jacobian_F(x: np.array) -> np.array:
     return np.array([
         [2*x[0], 2*x[1]],
@@ -47,24 +48,31 @@ def Jacobian_Phi(x: np.array) -> np.array:
         [2*x[0] + 1, 2 * x[1]],
         [1, -np.exp(x[1]) + 1]
     ])
+
+def find_tao(x: np.array, eps: float = 1e-1 ) -> float:
+    J = Jacobian_Phi(x)
+    tao = min((1 / sum(np.abs(J[i]))) for i in range(len(J)))
+    return tao - eps
     
+
 def sufficient_condition_for_iteration_method_convergence(x, tao: float = 0.1) -> bool:
     J = Jacobian_Phi(x)
-    if all(sum(tao * np.abs(J[i])) < 1 for i in range(len(J))):
-        return True
-    return False
+    return all(sum(tao * np.abs(J[i])) < 1 for i in range(len(J)))
     
-def simple_iterations(x0, a, eps=1e-4, max_iter=1000, tao=0.1):
+    
+def simple_iterations(x0, a, eps=1e-3, max_iter=1000, tao=0.1):
     x = np.array(x0, dtype=float)
     
     iteration = 0
     while iteration < max_iter:
         iteration += 1
-        new_x = Phi(x, a, tao)
-        if not sufficient_condition_for_iteration_method_convergence(x, tao):
+        new_x = Phi(x, a, find_tao(x))
+        #print(iteration, find_tao(x), (x, F(x, a)), (new_x, F(x, a)))
+        if not sufficient_condition_for_iteration_method_convergence(x, find_tao(x)):
             print("The sufficient condition for convergence is not satisfied.")
-            return iteration, None
-        if np.linalg.norm(new_x - x) < eps:
+            return iteration, x
+        if (1 / find_tao(x)) * np.linalg.norm(new_x - x) < eps:
+            print(find_tao(x))
             return iteration, new_x
         x = new_x
     return iteration, x
@@ -77,7 +85,7 @@ def newton_method(x0, a, eps=1e-4, max_iter=1000):
         iteration += 1
         J = Jacobian_F(x)
         F_val = F(x, a)
-        delta_x = gaussian_elimination(J.copy(), -F_val.copy())#np.linalg.solve(J, -F_val)
+        delta_x = gaussian_elimination(J.copy(), -F_val.copy())
         new_x = x + delta_x
         if np.linalg.norm(abs(new_x - x)) < eps:
             return iteration, x
@@ -87,8 +95,14 @@ def newton_method(x0, a, eps=1e-4, max_iter=1000):
 def main():
     a = 1
     
+    x0_simple = np.array([0, 1])
+    i, x = simple_iterations(x0_simple, a, eps=1e-9, tao=0.1, max_iter=1000)
+    print("Simple iterations:")
+    print(f"Solution: {x}, Iterations: {i}\n\n")
+    
+    
     x0_simple = np.array([-0.5, -0.5])
-    i, x = simple_iterations(x0_simple, a, eps=1e-9, tao=0.1)
+    i, x = simple_iterations(x0_simple, a, eps=1e-9, tao=0.1, max_iter=1000)
     print("Simple iterations:")
     print(f"Solution: {x}, Iterations: {i}")
     
