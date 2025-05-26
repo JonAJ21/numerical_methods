@@ -97,10 +97,10 @@ def simple_iterations(phi: Callable, jacobian: Callable, x0: np.array, a: float,
     return iteration, x
 
 def main():
-    a = 1
+    a = 4
     
     x0_simple = np.array([-0.5, -0.5])
-    i, x = simple_iterations(Phi1, Jacobian_Phi1, x0_simple, a, eps=1e-9)
+    i, x = simple_iterations(Phi1, Jacobian_Phi1, x0_simple, a, tao=0.2, eps=1e-9)
     print("Simple iterations:")
     print(f"Solution: {x}, Iterations: {i}")
     
@@ -108,7 +108,7 @@ def main():
     print(f"Simple iterations: {F1(x, a)} == [0, 0]\n\n")
     
     x0_simple = np.array([0.5, 0.5])
-    i, x = simple_iterations(Phi2, Jacobian_Phi2, x0_simple, a, eps=1e-9, tao=1)
+    i, x = simple_iterations(Phi2, Jacobian_Phi2, x0_simple, a, eps=1e-9)
     print("Simple iterations:")
     print(f"Solution: {x}, Iterations: {i}")
     

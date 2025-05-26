@@ -93,7 +93,7 @@ def newton_method(x0, a, eps=1e-4, max_iter=1000):
     return iteration, x
 
 def main():
-    a = 1
+    a = 4
     
     x0_simple = np.array([0, 1])
     i, x = simple_iterations(x0_simple, a, eps=1e-9, tao=0.1, max_iter=1000)
@@ -101,7 +101,7 @@ def main():
     print(f"Solution: {x}, Iterations: {i}\n\n")
     
     
-    x0_simple = np.array([-0.5, -0.5])
+    x0_simple = np.array([3.9, 3.9])
     i, x = simple_iterations(x0_simple, a, eps=1e-9, tao=0.1, max_iter=1000)
     print("Simple iterations:")
     print(f"Solution: {x}, Iterations: {i}")
